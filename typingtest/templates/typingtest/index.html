@@ -1,0 +1,12 @@
+{% load staticfiles %}
+
+<link rel="stylesheet" type="text/css" href="{% static 'typingtest/style.css' %}" />
+{% if latest_typingtest_list %}
+	<ul>
+	{% for typingtest in latest_typingtest_list %}
+		<li><a href="{% url 'typingtest:detail' typingtest.id %}">{{ typingtest.name }}</a></li>
+	{% endfor %}
+	</ul>
+{% else %}
+	<p> No challenges are available </p>
+{% endif %}
