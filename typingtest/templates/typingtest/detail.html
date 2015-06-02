@@ -1,97 +1,76 @@
-<h2> {{ typingtest.name }} </h2>
-<hr />
-<h3> Typing Test Information </h3>
-Features: {{ typingtest.features }}
-<p> Score: <span id="upvote-label">{{ typingtest.upvotes }}</span> upvotes - <span id="downvote-label">{{ typingtest.downvotes }}</span> downvotes</p>
-<form id="vote-form">
-<input type="button" name="submit-form" id=1 value="Upvote" />
-<input type="button" name="submit-form" id=2 value="Downvote" />
-</form>
-<hr />
-<h3> Typing Test Text </h3>
-<p id="typing-test-text">{{ typingtest.text }}</p>
-<p id="typing-test-match-label">Text</p>
+{% load staticfiles %}
 
-<input type="textfield" id="typing-test-input" />
-<p id="wpm-label">0 wpm</p>
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>{{typingtest.name}}</title>
 
-<script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
-<script type="text/javascript">
-	function getCookie(name) {
-	    var cookieValue = null;
-	    if (document.cookie && document.cookie != '') {
-	        var cookies = document.cookie.split(';');
-	        for (var i = 0; i < cookies.length; i++) {
-	            var cookie = jQuery.trim(cookies[i]);
-	            if (cookie.substring(0, name.length + 1) == (name + '=')) {
-	                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-	                break;
-	            }
-	        }
-	    }
-	    return cookieValue;
-	}
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.96.1/css/materialize.min.css" />
+		<link rel="stylesheet" href="{% static 'typingtest/css/style.css' %}" />
+	</head>
+	<body>
+		<!-- Display the nav bar -->
+		{% include 'typingtest/nav.html' %}
 
-	var csrftoken = getCookie('csrftoken');
+		<!-- Display the test information -->
+		<main>
+			<div class="container">
+				<div class="section">
+					<div class="row">
+						<div class="col s8 offset-s2">
+							<h3> {{ typingtest.name }} </h3>
+							<h5> Typing Test Information </h5>
+							<p> Features: {{ typingtest.features }} </p>
+							<p> Score: <span id="upvote-label">{{ typingtest.upvotes }}</span> upvotes - <span id="downvote-label">{{ typingtest.downvotes }}</span> downvotes </p>
+							<input type="button" name="submit-form" id=1 value="Upvote" />
+							<input type="button" name="submit-form" id=2 value="Downvote" />
+							<p id="typing-test-text">{{ typingtest.text }}</p>
 
-	$('input[name=submit-form]').click(function(event){
-		var post = $.post("{% url 'typingtest:vote' typingtest.id %}", {'vote': event.target.id, "csrfmiddlewaretoken": csrftoken}, function(data){
-			if(data['error']) {
-				
-			} else {
-				$('#upvote-label').html(data['newUpvotes']);
-				$('#downvote-label').html(data['newDownvotes']);
-			}
-		});
+							<input type="text" id="typing-test-input" />
+							<p id="wpm-label">0 wpm</p>
+						</div>
+					</div>
+				</div>
+			</div>
+		</main>
 
-	});
+		<!-- Display the footer -->
+		{% include 'typingtest/foot.html' %}
+		
+		<!-- Loading javascript files -->
+		<script type="text/javascript" src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+		<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.96.1/js/materialize.min.js"></script>
+		<script type="text/javascript" src="{% static 'typingtest/js/cookie.js' %}"></script>
+		<script type="text/javascript" src="{% static 'typingtest/js/typingtest.js' %}"></script>
 
-	// Grabbing necessary DOM elements
-	var inputField = $('#typing-test-input');
-	var currentWordLabel = $('#typing-test-match-label');
-	var speedLabel = $('#wpm-label');
+		<!-- Build page specific javascript -->
+		<script type="text/javascript">
+			// Get our token for posting to the server
+			var csrftoken = getCookie('csrftoken');
 
-	// Grabbing the text for the typing test
-	var text = $('#typing-test-text').text();
-	var stringArr = text.split(' ');
+			// Check for up or down votes
+			$('input[name=submit-form]').click(function(event){
+				var post = $.post("{% url 'typingtest:vote' typingtest.id %}", {'vote': event.target.id, "csrfmiddlewaretoken": csrftoken}, function(data){
+					if(data['error']) {
+						
+					} else {
+						$('#upvote-label').html(data['newUpvotes']);
+						$('#downvote-label').html(data['newDownvotes']);
+					}
+				});
+			});
 
-	var TIME_CONVERSION = 1000;
-	var wordInputCount = 0;
-	var started = false;
+			// Grabbing necessary DOM elements
+			var textLabel = $('#typing-test-text');
+			var inputField = $('#typing-test-input');
+			var speedLabel = $('#wpm-label');
 
-	var startTime = 0;
-	var currentTime = startTime;
-
-	function updateFields() {
-		currentWordLabel.html(stringArr[wordInputCount]);
-		inputField.val('');
-	}
-
-	function calculateWPM() {
-		currentTime = ($.now() / TIME_CONVERSION);
-		var time = currentTime - startTime;
-		var ratio = 60 / time;
-		speedLabel.text(Math.round(wordInputCount * ratio) + ' wpm');
-	}
-
-	updateFields();
-	inputField.keyup(function(event) {
-		if(!started) {
-			startTime = ($.now() / TIME_CONVERSION);
-			currentTime = startTime;
-			started = true;
-		}
-
-		var keycode = event.keycode ? event.keycode : event.which;
-		if(keycode == 32) {
-			var inputText = inputField.val();
-			var matchText = stringArr[wordInputCount];
-			var sliced = inputText.slice(0, -1);
-			if(inputText.slice(0, -1) == matchText) {
-				wordInputCount++;
-				updateFields();
-				calculateWPM();
-			}
-		}
-	});
-</script>
+			// Initializing our typing test
+			var typingTest = new TypingTest(textLabel, inputField, speedLabel);
+			typingTest.onTestCompletion(function(time, wpm) {
+				// Handle the completion of the test
+				console.log('Test Finished');
+			});
+		</script>
+	</body>
+</html>
